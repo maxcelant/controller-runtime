@@ -47,6 +47,8 @@ type EnqueueRequestForObject = TypedEnqueueRequestForObject[client.Object]
 type TypedEnqueueRequestForObject[object client.Object] struct{}
 
 // Create implements EventHandler.
+// INSIGHT: This takes the event coming and and actually constructs the reconcile.Request object to add to the queue.
+// HMM: I wonder how the create/update/delete differ in the queue -- i dont think they do
 func (e *TypedEnqueueRequestForObject[T]) Create(ctx context.Context, evt event.TypedCreateEvent[T], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 	if isNil(evt.Object) {
 		enqueueLog.Error(nil, "CreateEvent received with no metadata", "event", evt)

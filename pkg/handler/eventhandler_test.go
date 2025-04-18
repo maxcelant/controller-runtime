@@ -43,10 +43,11 @@ import (
 var _ = Describe("Eventhandler", func() {
 	var ctx = context.Background()
 	var q workqueue.TypedRateLimitingInterface[reconcile.Request]
-	var instance handler.EnqueueRequestForObject
+	var hndlr handler.EnqueueRequestForObject
 	var pod *corev1.Pod
 	var mapper meta.RESTMapper
 	BeforeEach(func() {
+		// Creates a new queue
 		q = &controllertest.Queue{TypedInterface: workqueue.NewTyped[reconcile.Request]()}
 		pod = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "biz", Name: "baz"},
@@ -64,7 +65,7 @@ var _ = Describe("Eventhandler", func() {
 			evt := event.CreateEvent{
 				Object: pod,
 			}
-			instance.Create(ctx, evt, q)
+			hndlr.Create(ctx, evt, q)
 			Expect(q.Len()).To(Equal(1))
 
 			req, _ := q.Get()
@@ -75,7 +76,7 @@ var _ = Describe("Eventhandler", func() {
 			evt := event.DeleteEvent{
 				Object: pod,
 			}
-			instance.Delete(ctx, evt, q)
+			hndlr.Delete(ctx, evt, q)
 			Expect(q.Len()).To(Equal(1))
 
 			req, _ := q.Get()
@@ -92,7 +93,7 @@ var _ = Describe("Eventhandler", func() {
 					ObjectOld: pod,
 					ObjectNew: newPod,
 				}
-				instance.Update(ctx, evt, q)
+				hndlr.Update(ctx, evt, q)
 				Expect(q.Len()).To(Equal(1))
 
 				req, _ := q.Get()
@@ -103,7 +104,7 @@ var _ = Describe("Eventhandler", func() {
 			evt := event.GenericEvent{
 				Object: pod,
 			}
-			instance.Generic(ctx, evt, q)
+			hndlr.Generic(ctx, evt, q)
 			Expect(q.Len()).To(Equal(1))
 			req, _ := q.Get()
 			Expect(req.NamespacedName).To(Equal(types.NamespacedName{Namespace: "biz", Name: "baz"}))
@@ -114,7 +115,7 @@ var _ = Describe("Eventhandler", func() {
 				evt := event.CreateEvent{
 					Object: nil,
 				}
-				instance.Create(ctx, evt, q)
+				hndlr.Create(ctx, evt, q)
 				Expect(q.Len()).To(Equal(0))
 			})
 
@@ -127,14 +128,14 @@ var _ = Describe("Eventhandler", func() {
 					ObjectNew: newPod,
 					ObjectOld: nil,
 				}
-				instance.Update(ctx, evt, q)
+				hndlr.Update(ctx, evt, q)
 				Expect(q.Len()).To(Equal(1))
 				req, _ := q.Get()
 				Expect(req.NamespacedName).To(Equal(types.NamespacedName{Namespace: "biz2", Name: "baz2"}))
 
 				evt.ObjectNew = nil
 				evt.ObjectOld = pod
-				instance.Update(ctx, evt, q)
+				hndlr.Update(ctx, evt, q)
 				Expect(q.Len()).To(Equal(1))
 				req, _ = q.Get()
 				Expect(req.NamespacedName).To(Equal(types.NamespacedName{Namespace: "biz", Name: "baz"}))
@@ -144,7 +145,7 @@ var _ = Describe("Eventhandler", func() {
 				evt := event.DeleteEvent{
 					Object: nil,
 				}
-				instance.Delete(ctx, evt, q)
+				hndlr.Delete(ctx, evt, q)
 				Expect(q.Len()).To(Equal(0))
 			})
 
@@ -152,7 +153,7 @@ var _ = Describe("Eventhandler", func() {
 				evt := event.GenericEvent{
 					Object: nil,
 				}
-				instance.Generic(ctx, evt, q)
+				hndlr.Generic(ctx, evt, q)
 				Expect(q.Len()).To(Equal(0))
 			})
 		})
@@ -727,7 +728,7 @@ var _ = Describe("Eventhandler", func() {
 				ObjectOld: pod,
 				ObjectNew: newPod,
 			}
-			instance.Update(ctx, evt, q)
+			hndlr.Update(ctx, evt, q)
 		})
 
 		It("should call DeleteFunc for a DeleteEvent if provided.", func() {

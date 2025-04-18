@@ -41,11 +41,9 @@ type OwnerOption func(e enqueueRequestForOwnerInterface)
 
 // EnqueueRequestForOwner enqueues Requests for the Owners of an object.  E.g. the object that created
 // the object that was the source of the Event.
-//
-// If a ReplicaSet creates Pods, users may reconcile the ReplicaSet in response to Pod Events using:
-//
+
+// IMPORTANT: If a ReplicaSet creates Pods, users may reconcile the ReplicaSet in response to Pod Events using:
 // - a source.Kind Source with Type of Pod.
-//
 // - a handler.enqueueRequestForOwner EventHandler with an OwnerType of ReplicaSet and OnlyControllerOwner set to true.
 func EnqueueRequestForOwner(scheme *runtime.Scheme, mapper meta.RESTMapper, ownerType client.Object, opts ...OwnerOption) EventHandler {
 	return TypedEnqueueRequestForOwner[client.Object](scheme, mapper, ownerType, opts...)

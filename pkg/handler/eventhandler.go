@@ -30,7 +30,10 @@ import (
 // EventHandler enqueues reconcile.Requests in response to events (e.g. Pod Create).  EventHandlers map an Event
 // for one object to trigger Reconciles for either the same object or different objects - e.g. if there is an
 // Event for object with type Foo (using source.Kind) then reconcile one or more object(s) with type Bar.
-//
+
+// IMPORTANT: the events can come from many related objects, but the reconciler is only
+// responsible for reconciling that one resource. So if the child changed, we are grabbing the parent and reconciling it.
+
 // Identical reconcile.Requests will be batched together through the queuing mechanism before reconcile is called.
 //
 // * Use EnqueueRequestForObject to reconcile the object the event is for
@@ -228,6 +231,7 @@ func addToQueueCreate[T client.Object, request comparable](q workqueue.TypedRate
 
 // addToQueueUpdate adds the reconcile.Request to the priorityqueue in the handler
 // for Update requests if and only if the workqueue being used is of type priorityqueue.PriorityQueue[reconcile.Request]
+// NOTE: There's is the option of the queues here -- normal and priority queue.
 func addToQueueUpdate[T client.Object, request comparable](q workqueue.TypedRateLimitingInterface[request], evt event.TypedUpdateEvent[T], item request) {
 	priorityQueue, isPriorityQueue := q.(priorityqueue.PriorityQueue[request])
 	if !isPriorityQueue {
@@ -236,6 +240,8 @@ func addToQueueUpdate[T client.Object, request comparable](q workqueue.TypedRate
 	}
 
 	var priority int
+	// NOTE: If the resource version didn't change, then it's not really important
+	// probably nothing changed in the object
 	if evt.ObjectOld.GetResourceVersion() == evt.ObjectNew.GetResourceVersion() {
 		priority = LowPriority
 	}
