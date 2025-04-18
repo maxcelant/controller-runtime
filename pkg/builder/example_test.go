@@ -46,6 +46,7 @@ func ExampleBuilder_metadata_only() {
 		os.Exit(1)
 	}
 
+	// NOTE: The ControllerManagedBy is later aliased to NewControllerManagedBy which is exported by the library
 	cl := mgr.GetClient()
 	err = builder.
 		ControllerManagedBy(mgr).                  // Create the ControllerManagedBy

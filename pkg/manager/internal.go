@@ -164,7 +164,7 @@ type controllerManager struct {
 }
 
 type hasCache interface {
-	Runnable
+	Runnable // NOTE: Interfaces can extend other interfaces!
 	GetCache() cache.Cache
 }
 
@@ -331,6 +331,7 @@ func (cm *controllerManager) addPprofServer() error {
 // An error has occurred during in one of the internal operations,
 // such as leader election, cache start, webhooks, and so on.
 // Or, the context is cancelled.
+// NOTE: This is the actual manager that starts up and runs the controllers
 func (cm *controllerManager) Start(ctx context.Context) (err error) {
 	cm.Lock()
 	if cm.started {

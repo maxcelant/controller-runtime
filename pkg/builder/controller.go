@@ -49,11 +49,14 @@ const (
 )
 
 // Builder builds a Controller.
+// NOTE: reconcile.Request is a comparable object
 type Builder = TypedBuilder[reconcile.Request]
 
 // TypedBuilder builds a Controller. The request is the request type
 // that is passed to the workqueue and then to the Reconciler.
 // The workqueue de-duplicates identical requests.
+// IMPORTANT: the `request` here is labelled comparable because the underlying types are comparable
+// aka Name and Namespace are both strings, which are comparable, which means we can compare our reconcile.Request type
 type TypedBuilder[request comparable] struct {
 	forInput         ForInput
 	ownsInput        []OwnsInput
@@ -68,6 +71,7 @@ type TypedBuilder[request comparable] struct {
 }
 
 // ControllerManagedBy returns a new controller builder that will be started by the provided Manager.
+// NOTE: generics are annoying and muddle this stuff, but basically, its just a wrapper for the non-generic version
 func ControllerManagedBy(m manager.Manager) *Builder {
 	return TypedControllerManagedBy[reconcile.Request](m)
 }
@@ -90,11 +94,14 @@ type ForInput struct {
 //
 // This is the equivalent of calling
 // Watches(source.Kind(cache, &Type{}, &handler.EnqueueRequestForObject{})).
+// NOTE: We want to reconcile the object
 func (blder *TypedBuilder[request]) For(object client.Object, opts ...ForOption) *TypedBuilder[request] {
 	if blder.forInput.object != nil {
 		blder.forInput.err = fmt.Errorf("For(...) should only be called once, could not assign multiple objects for reconciliation")
 		return blder
 	}
+	// NOTE: They wrap the object here so that they can
+	// then add options to it as part of the ForInput struct
 	input := ForInput{object: object}
 	for _, opt := range opts {
 		opt.ApplyToFor(&input)

@@ -102,6 +102,7 @@ var (
 	GetConfig = config.GetConfig
 
 	// NewControllerManagedBy returns a new controller builder that will be started by the provided Manager.
+	// IMPORTANT: This alias.go are basically the package exports
 	NewControllerManagedBy = builder.ControllerManagedBy
 
 	// NewWebhookManagedBy returns a new webhook builder that will be started by the provided Manager.
