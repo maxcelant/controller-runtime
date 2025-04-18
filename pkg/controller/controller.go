@@ -62,6 +62,7 @@ type TypedOptions[request comparable] struct {
 	NeedLeaderElection *bool
 
 	// Reconciler reconciles an object
+	// NOTE: This is the reconciler that is used as part of the controller
 	Reconciler reconcile.TypedReconciler[request]
 
 	// RateLimiter is used to limit how frequently requests may be queued.
@@ -159,6 +160,7 @@ func New(name string, mgr manager.Manager, options Options) (Controller, error) 
 // NewTyped returns a new typed controller registered with the Manager,
 //
 // The name must be unique as it is used to identify the controller in metrics and logs.
+// NOTE: This is what sets up the manager with this controller!
 func NewTyped[request comparable](name string, mgr manager.Manager, options TypedOptions[request]) (TypedController[request], error) {
 	options.DefaultFromConfig(mgr.GetControllerOptions())
 	c, err := NewTypedUnmanaged(name, options)

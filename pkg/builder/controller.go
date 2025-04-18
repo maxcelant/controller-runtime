@@ -112,6 +112,7 @@ func (blder *TypedBuilder[request]) For(object client.Object, opts ...ForOption)
 }
 
 // OwnsInput represents the information set by Owns method.
+// NOTE: Similarly to the ForInput, this is a wrapper to add config options to the child of the thing we want to watch
 type OwnsInput struct {
 	matchEveryOwner  bool
 	object           client.Object
@@ -163,6 +164,7 @@ func (w *WatchesInput[request]) setObjectProjection(objectProjection objectProje
 //
 // This is the equivalent of calling
 // WatchesRawSource(source.Kind(cache, object, eventHandler, predicates...)).
+// NOTE: This allows us to watch changes in objects that aren't directly related to the reconciled object
 func (blder *TypedBuilder[request]) Watches(
 	object client.Object,
 	eventHandler handler.TypedEventHandler[client.Object, request],
@@ -291,6 +293,7 @@ func (blder *TypedBuilder[request]) Build(r reconcile.TypedReconciler[request]) 
 		return nil, err
 	}
 
+	// NOTE: Returns the actual controller here, though im not sure why bc it's not actually used.
 	return blder.ctrl, nil
 }
 
@@ -401,6 +404,7 @@ func (blder *TypedBuilder[request]) doController(r reconcile.TypedReconciler[req
 	if ctrlOptions.Reconciler != nil && r != nil {
 		return errors.New("reconciler was set via WithOptions() and via Build() or Complete()")
 	}
+	// NOTE: The reconciler is added here to the controller
 	if ctrlOptions.Reconciler == nil {
 		ctrlOptions.Reconciler = r
 	}
@@ -463,11 +467,14 @@ func (blder *TypedBuilder[request]) doController(r reconcile.TypedReconciler[req
 		}
 	}
 
+	// NOTE: This is where we get the newController func is set
+	// By taking the generic and using the `request` type.
 	if blder.newController == nil {
 		blder.newController = controller.NewTyped[request]
 	}
 
 	// Build the controller and return.
+	// IMPORTANT: The controller options (including the reconciler) are passed into the controller here
 	blder.ctrl, err = blder.newController(controllerName, blder.mgr, ctrlOptions)
 	return err
 }
