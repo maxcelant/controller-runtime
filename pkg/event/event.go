@@ -18,6 +18,9 @@ package event
 
 import "sigs.k8s.io/controller-runtime/pkg/client"
 
+// IMPORTANT: Events of different types (create, update, delete) are generated from a Source and
+// transformed into a reconcile.Request by EventHandler
+
 // CreateEvent is an event where a Kubernetes object was created. CreateEvent should be generated
 // by a source.Source and transformed into a reconcile.Request by a handler.EventHandler.
 type CreateEvent = TypedCreateEvent[client.Object]

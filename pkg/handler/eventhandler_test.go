@@ -61,6 +61,8 @@ var _ = Describe("Eventhandler", func() {
 	})
 
 	Describe("EnqueueRequestForObject", func() {
+		// NOTE: This test explains how it works, an event comes in, the handler handles it depending on the type
+		// and then it gets enqueued.
 		It("should enqueue a Request with the Name / Namespace of the object in the CreateEvent.", func() {
 			evt := event.CreateEvent{
 				Object: pod,

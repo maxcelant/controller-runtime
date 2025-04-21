@@ -139,6 +139,7 @@ type TypedController[request comparable] interface {
 	reconcile.TypedReconciler[request]
 
 	// Watch watches the provided Source.
+	// NOTE: This is the stream which this controller is watching
 	Watch(src source.TypedSource[request]) error
 
 	// Start starts the controller.  Start blocks until the context is closed or a
