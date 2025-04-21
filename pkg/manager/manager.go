@@ -267,6 +267,7 @@ type Options struct {
 	// Controller contains global configuration options for controllers
 	// registered within this manager.
 	// +optional
+	// NOTE: This is where you can add config options to your controller
 	Controller config.Controller
 
 	// makeBroadcaster allows deferring the creation of the broadcaster to
@@ -323,8 +324,9 @@ func New(config *rest.Config, options Options) (Manager, error) {
 		return nil, errors.New("must specify Config")
 	}
 	// Set default values for options fields
+	// NOTE: We set the default controller options along with other stuff
 	options = setOptionsDefaults(options)
-
+	// IMPORTANT: Creates
 	cluster, err := cluster.New(config, func(clusterOptions *cluster.Options) {
 		clusterOptions.Scheme = options.Scheme
 		clusterOptions.MapperProvider = options.MapperProvider
