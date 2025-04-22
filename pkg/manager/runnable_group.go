@@ -126,7 +126,7 @@ func (r *runnableGroup) Started() bool {
 	return r.started
 }
 
-// Start starts the group and waits for all
+// IMPORTANT: Start starts the group and waits for all
 // initially registered runnables to start.
 // It can only be called once, subsequent calls have no effect.
 func (r *runnableGroup) Start(ctx context.Context) error {

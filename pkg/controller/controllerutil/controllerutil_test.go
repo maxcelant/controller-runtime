@@ -488,6 +488,7 @@ var _ = Describe("Controllerutil", func() {
 				Namespace: deploy.Namespace,
 			}
 
+			// NOTE: Sets the spec to the deployment.Spec
 			specr = deploymentSpecr(deploy, deplSpec)
 		})
 

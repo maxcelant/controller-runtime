@@ -27,13 +27,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// EventHandler enqueues reconcile.Requests in response to events (e.g. Pod Create).  EventHandlers map an Event
-// for one object to trigger Reconciles for either the same object or different objects - e.g. if there is an
-// Event for object with type Foo (using source.Kind) then reconcile one or more object(s) with type Bar.
-
 // IMPORTANT: the events can come from many related objects, but the reconciler is only
 // responsible for reconciling that one resource. So if the child changed, we are grabbing the parent and reconciling it.
 
+// EventHandler enqueues reconcile.Requests in response to events (e.g. Pod Create).  EventHandlers map an Event
+// for one object to trigger Reconciles for either the same object or different objects - e.g. if there is an
+// Event for object with type Foo (using source.Kind) then reconcile one or more object(s) with type Bar.
+//
 // Identical reconcile.Requests will be batched together through the queuing mechanism before reconcile is called.
 //
 // * Use EnqueueRequestForObject to reconcile the object the event is for

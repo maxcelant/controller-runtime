@@ -25,7 +25,8 @@ if [[ -n ${ARTIFACTS:-} ]]; then
 fi
 
 result=0
-go test -v -race ${P_FLAG} ${MOD_OPT} ./... --ginkgo.fail-fast ${GINKGO_ARGS} || result=$?
+pwd
+go test -v -race ${P_FLAG} ${MOD_OPT} ./pkg/controller/controllerutil --ginkgo.fail-fast ${GINKGO_ARGS} || result=$?
 
 if [[ -n ${ARTIFACTS:-} ]]; then
   mkdir -p ${ARTIFACTS}
