@@ -314,6 +314,7 @@ func (blder *TypedBuilder[request]) project(obj client.Object, proj objectProjec
 	}
 }
 
+// NOTE: Starts watching the object
 func (blder *TypedBuilder[request]) doWatch() error {
 	// Reconcile type
 	if blder.forInput.object != nil {
