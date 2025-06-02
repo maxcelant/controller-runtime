@@ -126,9 +126,6 @@ func (r *runnableGroup) Started() bool {
 	return r.started
 }
 
-// IMPORTANT: Start starts the group and waits for all
-// initially registered runnables to start.
-// It can only be called once, subsequent calls have no effect.
 func (r *runnableGroup) Start(ctx context.Context) error {
 	var retErr error
 
@@ -142,6 +139,9 @@ func (r *runnableGroup) Start(ctx context.Context) error {
 		// the runnables that were added prior.
 		r.start.Lock()
 		r.started = true
+		// NOTE: We loop through all of the runnables that
+		// were added prior to calling Start and add them to the
+		// channel, where they will be read from and processed.
 		for _, rn := range r.startQueue {
 			rn.signalReady = true
 			r.ch <- rn
@@ -160,6 +160,7 @@ func (r *runnableGroup) Start(ctx context.Context) error {
 				if err := ctx.Err(); !errors.Is(err, context.Canceled) {
 					retErr = err
 				}
+			// NOTE: Once a runnable has started and is actively reconciling, we remove it from the start queue
 			case rn := <-r.startReadyCh:
 				for i, existing := range r.startQueue {
 					if existing == rn {
@@ -208,6 +209,7 @@ func (r *runnableGroup) reconcile() {
 
 		// Start the runnable.
 		go func(rn *readyRunnable) {
+			// NOTE: Used to notify the Start() func that this runnable has started
 			go func() {
 				if rn.Check(r.ctx) {
 					if rn.signalReady {
