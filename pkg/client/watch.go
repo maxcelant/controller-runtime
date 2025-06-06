@@ -39,6 +39,8 @@ type watchingClient struct {
 	*client
 }
 
+// NOTE: Watch basically "wraps" the client
+// Depending on the type of thing we are watching, we do something different
 func (w *watchingClient) Watch(ctx context.Context, list ObjectList, opts ...ListOption) (watch.Interface, error) {
 	switch l := list.(type) {
 	case runtime.Unstructured:
@@ -90,7 +92,9 @@ func (w *watchingClient) unstructuredWatch(ctx context.Context, obj runtime.Unst
 		Watch(ctx)
 }
 
+// NOTE: This is the typical watch that is used here to watch the kubernetes API for a specific resource.
 func (w *watchingClient) typedWatch(ctx context.Context, obj ObjectList, opts ...ListOption) (watch.Interface, error) {
+	// Gets the type of resource we want to subscribe to events for
 	r, err := w.client.typedClient.resources.getResource(obj)
 	if err != nil {
 		return nil, err

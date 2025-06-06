@@ -49,6 +49,7 @@ type Controller[request comparable] struct {
 	// Reconciler is a function that can be called at any time with the Name / Namespace of an object and
 	// ensures that the state of the system matches the state specified in the object.
 	// Defaults to the DefaultReconcileFunc.
+	// NOTE: This is the reconciler struct that we add to call Reconcile on our request
 	Do reconcile.TypedReconciler[request]
 
 	// RateLimiter is used to limit how frequently requests may be queued into the work queue.
@@ -57,6 +58,7 @@ type Controller[request comparable] struct {
 	// NewQueue constructs the queue for this controller once the controller is ready to start.
 	// This is a func because the standard Kubernetes work queues start themselves immediately, which
 	// leads to goroutine leaks if something calls controller.New repeatedly.
+	// NOTE: Here we add a work queue to the controller
 	NewQueue func(controllerName string, rateLimiter workqueue.TypedRateLimiter[request]) workqueue.TypedRateLimitingInterface[request]
 
 	// Queue is an listeningQueue that listens for events from Informers and adds object keys to
@@ -116,6 +118,7 @@ func (c *Controller[request]) Reconcile(ctx context.Context, req request) (_ rec
 			panic(r)
 		}
 	}()
+	// IMPORTANT: Here we call the Reconcile method in the controller
 	return c.Do.Reconcile(ctx, req)
 }
 
@@ -199,6 +202,7 @@ func (c *Controller[request]) Start(ctx context.Context) error {
 				defer wg.Done()
 				// Run a worker thread that just dequeues items, processes them, and marks them done.
 				// It enforces that the reconcileHandler is never invoked concurrently with the same object.
+				// IMPORTANT: Indefinitely processes the next request in the queue
 				for c.processNextWorkItem(ctx) {
 				}
 			}()
@@ -279,7 +283,9 @@ func (c *Controller[request]) startEventSources(ctx context.Context) error {
 
 // processNextWorkItem will read a single work item off the workqueue and
 // attempt to process it, by calling the reconcileHandler.
+// IMPORTANT: We get the next item off of the queue and call the reconciler with that object
 func (c *Controller[request]) processNextWorkItem(ctx context.Context) bool {
+	// NOTE: Gets the next item in the queue
 	obj, priority, shutdown := c.Queue.GetWithPriority()
 	if shutdown {
 		// Stop working
@@ -296,7 +302,7 @@ func (c *Controller[request]) processNextWorkItem(ctx context.Context) bool {
 
 	ctrlmetrics.ActiveWorkers.WithLabelValues(c.Name).Add(1)
 	defer ctrlmetrics.ActiveWorkers.WithLabelValues(c.Name).Add(-1)
-
+	// NOTE: This then calls reconcile with that object
 	c.reconcileHandler(ctx, obj, priority)
 	return true
 }
@@ -336,6 +342,7 @@ func (c *Controller[request]) reconcileHandler(ctx context.Context, req request,
 
 	// RunInformersAndControllers the syncHandler, passing it the Namespace/Name string of the
 	// resource to be synced.
+	// NOTE: Depending on the result from the user, we will either requeue or not
 	log.V(5).Info("Reconciling")
 	result, err := c.Reconcile(ctx, req)
 	switch {
@@ -362,9 +369,11 @@ func (c *Controller[request]) reconcileHandler(ctx context.Context, req request,
 		ctrlmetrics.ReconcileTotal.WithLabelValues(c.Name, labelRequeueAfter).Inc()
 	case result.Requeue: //nolint: staticcheck // We have to handle it until it is removed
 		log.V(5).Info("Reconcile done, requeueing")
+		// NOTE: This will requeue it instantly
 		c.Queue.AddWithOpts(priorityqueue.AddOpts{RateLimited: true, Priority: priority}, req)
 		ctrlmetrics.ReconcileTotal.WithLabelValues(c.Name, labelRequeue).Inc()
 	default:
+		// NOTE: This won't requeue the request
 		log.V(5).Info("Reconcile successful")
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.

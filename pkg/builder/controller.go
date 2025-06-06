@@ -49,11 +49,14 @@ const (
 )
 
 // Builder builds a Controller.
+// NOTE: reconcile.Request is a comparable object
 type Builder = TypedBuilder[reconcile.Request]
 
 // TypedBuilder builds a Controller. The request is the request type
 // that is passed to the workqueue and then to the Reconciler.
 // The workqueue de-duplicates identical requests.
+// IMPORTANT: the `request` here is labelled comparable because the underlying types are comparable
+// aka Name and Namespace are both strings, which are comparable, which means we can compare our reconcile.Request type
 type TypedBuilder[request comparable] struct {
 	forInput         ForInput
 	ownsInput        []OwnsInput
@@ -68,6 +71,7 @@ type TypedBuilder[request comparable] struct {
 }
 
 // ControllerManagedBy returns a new controller builder that will be started by the provided Manager.
+// NOTE: generics are annoying and muddle this stuff, but basically, its just a wrapper for the non-generic version
 func ControllerManagedBy(m manager.Manager) *Builder {
 	return TypedControllerManagedBy[reconcile.Request](m)
 }
@@ -90,11 +94,14 @@ type ForInput struct {
 //
 // This is the equivalent of calling
 // Watches(source.Kind(cache, &Type{}, &handler.EnqueueRequestForObject{})).
+// NOTE: We want to reconcile the object
 func (blder *TypedBuilder[request]) For(object client.Object, opts ...ForOption) *TypedBuilder[request] {
 	if blder.forInput.object != nil {
 		blder.forInput.err = fmt.Errorf("For(...) should only be called once, could not assign multiple objects for reconciliation")
 		return blder
 	}
+	// NOTE: They wrap the object here so that they can
+	// then add options to it as part of the ForInput struct
 	input := ForInput{object: object}
 	for _, opt := range opts {
 		opt.ApplyToFor(&input)
@@ -105,6 +112,7 @@ func (blder *TypedBuilder[request]) For(object client.Object, opts ...ForOption)
 }
 
 // OwnsInput represents the information set by Owns method.
+// NOTE: Similarly to the ForInput, this is a wrapper to add config options to the child of the thing we want to watch
 type OwnsInput struct {
 	matchEveryOwner  bool
 	object           client.Object
@@ -156,6 +164,7 @@ func (w *WatchesInput[request]) setObjectProjection(objectProjection objectProje
 //
 // This is the equivalent of calling
 // WatchesRawSource(source.Kind(cache, object, eventHandler, predicates...)).
+// NOTE: This allows us to watch changes in objects that aren't directly related to the reconciled object
 func (blder *TypedBuilder[request]) Watches(
 	object client.Object,
 	eventHandler handler.TypedEventHandler[client.Object, request],
@@ -284,6 +293,7 @@ func (blder *TypedBuilder[request]) Build(r reconcile.TypedReconciler[request]) 
 		return nil, err
 	}
 
+	// NOTE: Returns the actual controller here, though im not sure why bc it's not actually used.
 	return blder.ctrl, nil
 }
 
@@ -304,6 +314,7 @@ func (blder *TypedBuilder[request]) project(obj client.Object, proj objectProjec
 	}
 }
 
+// NOTE: Starts watching the object
 func (blder *TypedBuilder[request]) doWatch() error {
 	// Reconcile type
 	if blder.forInput.object != nil {
@@ -394,6 +405,7 @@ func (blder *TypedBuilder[request]) doController(r reconcile.TypedReconciler[req
 	if ctrlOptions.Reconciler != nil && r != nil {
 		return errors.New("reconciler was set via WithOptions() and via Build() or Complete()")
 	}
+	// NOTE: The reconciler is added here to the controller
 	if ctrlOptions.Reconciler == nil {
 		ctrlOptions.Reconciler = r
 	}
@@ -456,11 +468,14 @@ func (blder *TypedBuilder[request]) doController(r reconcile.TypedReconciler[req
 		}
 	}
 
+	// NOTE: This is where we get the newController func is set
+	// By taking the generic and using the `request` type.
 	if blder.newController == nil {
 		blder.newController = controller.NewTyped[request]
 	}
 
 	// Build the controller and return.
+	// IMPORTANT: The controller options (including the reconciler) are passed into the controller here
 	blder.ctrl, err = blder.newController(controllerName, blder.mgr, ctrlOptions)
 	return err
 }

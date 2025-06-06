@@ -59,9 +59,11 @@ type TypedOptions[request comparable] struct {
 
 	// NeedLeaderElection indicates whether the controller needs to use leader election.
 	// Defaults to true, which means the controller will use leader election.
+	// IMPORTANT: This means that the default is a standard controller
 	NeedLeaderElection *bool
 
 	// Reconciler reconciles an object
+	// NOTE: This is the reconciler that is used as part of the controller
 	Reconciler reconcile.TypedReconciler[request]
 
 	// RateLimiter is used to limit how frequently requests may be queued.
@@ -138,6 +140,7 @@ type TypedController[request comparable] interface {
 	reconcile.TypedReconciler[request]
 
 	// Watch watches the provided Source.
+	// NOTE: This is the stream which this controller is watching
 	Watch(src source.TypedSource[request]) error
 
 	// Start starts the controller.  Start blocks until the context is closed or a
@@ -159,7 +162,9 @@ func New(name string, mgr manager.Manager, options Options) (Controller, error) 
 // NewTyped returns a new typed controller registered with the Manager,
 //
 // The name must be unique as it is used to identify the controller in metrics and logs.
+// NOTE: This is what sets up the manager with this controller!
 func NewTyped[request comparable](name string, mgr manager.Manager, options TypedOptions[request]) (TypedController[request], error) {
+	// NOTE: This gets our options for this controller
 	options.DefaultFromConfig(mgr.GetControllerOptions())
 	c, err := NewTypedUnmanaged(name, options)
 	if err != nil {

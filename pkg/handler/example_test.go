@@ -50,11 +50,13 @@ func ExampleEnqueueRequestForObject() {
 
 // This example watches ReplicaSets and enqueues a Request containing the Name and Namespace of the
 // owning (direct) Deployment responsible for the creation of the ReplicaSet.
+// NOTE: When the child resource (replicaset) changes, the parent resource (deployment) is enqueued.
 func ExampleEnqueueRequestForOwner() {
 	// controller is a controller.controller
 	err := c.Watch(
 		source.Kind(mgr.GetCache(),
 			&appsv1.ReplicaSet{},
+			// The OWNER here is deployment, for the TYPE replicaset
 			handler.TypedEnqueueRequestForOwner[*appsv1.ReplicaSet](mgr.GetScheme(), mgr.GetRESTMapper(), &appsv1.Deployment{}, handler.OnlyControllerOwner()),
 		),
 	)

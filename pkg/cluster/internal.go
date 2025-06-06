@@ -99,6 +99,7 @@ func (c *cluster) GetLogger() logr.Logger {
 	return c.logger
 }
 
+// NOTE: When the manager calls start on the cluster, it's starting the cache
 func (c *cluster) Start(ctx context.Context) error {
 	defer c.recorderProvider.Stop(ctx)
 	return c.cache.Start(ctx)

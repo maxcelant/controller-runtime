@@ -210,6 +210,7 @@ func New(config *rest.Config, opts ...Option) (Cluster, error) {
 			clientOpts.Cache.Reader = cache
 		}
 	}
+	// NOTE: This uses the interceptor client
 	clientWriter, err := options.NewClient(config, clientOpts)
 	if err != nil {
 		return nil, err

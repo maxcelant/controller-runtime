@@ -28,6 +28,8 @@ type Funcs struct {
 }
 
 // NewClient returns a new interceptor client that calls the functions in funcs instead of the underlying client's methods, if they are not nil.
+// IMPORTANT: The interceptor is a wrapper around the client to add functionality to it.
+// Underneath its just calling the client, unless you offer a custom func
 func NewClient(interceptedClient client.WithWatch, funcs Funcs) client.WithWatch {
 	return interceptor{
 		client: interceptedClient,
@@ -51,6 +53,8 @@ func (c interceptor) IsObjectNamespaced(obj runtime.Object) (bool, error) {
 }
 
 func (c interceptor) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	// NOTE: With these methods, if don't offer a custom implementation, it will just call the default
+	// client version
 	if c.funcs.Get != nil {
 		return c.funcs.Get(ctx, c.client, key, obj, opts...)
 	}
@@ -122,6 +126,7 @@ func (c interceptor) RESTMapper() meta.RESTMapper {
 	return c.client.RESTMapper()
 }
 
+// IMPORTANT: This is the thing that calls the watch
 func (c interceptor) Watch(ctx context.Context, obj client.ObjectList, opts ...client.ListOption) (watch.Interface, error) {
 	if c.funcs.Watch != nil {
 		return c.funcs.Watch(ctx, c.client, obj, opts...)

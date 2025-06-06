@@ -28,8 +28,8 @@ import (
 var mgr manager.Manager
 var ctrl controller.Controller
 
-// This example Watches for Pod Events (e.g. Create / Update / Delete) and enqueues a reconcile.Request
-// with the Name and Namespace of the Pod.
+// NOTE: This watches for a specific kind of object and then the handler deals with
+// extracting the object and enqueuing it to be reconciled using the name and namespace
 func ExampleKind() {
 	err := ctrl.Watch(source.Kind(mgr.GetCache(), &corev1.Pod{}, &handler.TypedEnqueueRequestForObject[*corev1.Pod]{}))
 	if err != nil {
